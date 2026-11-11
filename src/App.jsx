@@ -389,7 +389,7 @@ export default function App() {
       provider: 'google',
       options: { 
         queryParams: { prompt: 'select_account' },
-        redirectTo: window.location.origin 
+        redirectTo: window.location.origin + import.meta.env.BASE_URL // quay về đúng trang web (VD: /greenseed/ trên GitHub Pages)
       }
     })
     if (error) console.error('Lỗi đăng nhập:', error.message)
