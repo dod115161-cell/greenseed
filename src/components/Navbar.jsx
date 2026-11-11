@@ -1,9 +1,22 @@
 import {Search,ShoppingCart} from 'lucide-react'
+import {useState,useEffect} from 'react'
+import {supabase} from '../supabaseClient'
+import LoginModal from './LoginModal'
 export const Logo=({s})=>(<div className="flex items-center gap-2">
 {s.logo?<img src={s.logo} className="h-9" alt="logo"/>:<svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="#E3F0AF" strokeWidth="2" strokeLinecap="round"><path d="M12 22V10M12 10C12 5 8 3 4 4c0 4 3 6 8 6zM12 13c0-4 3-6 8-6 0 4-3 7-8 6z"/></svg>}
 <span className="font-bold text-lg">{s.name}</span></div>)
 export default function Navbar({settings,q,setQ,cartCount,role,setRole,goShop,goCart,menu,onMenu, user, onGoogleLogin, onLogout}){
 const roles=[['Customer','Khách hàng'],['Seller','Người bán'],['Admin','Quản trị']]
+const [showLogin,setShowLogin]=useState(false)
+// Khi người dùng bấm link "đặt lại mật khẩu" trong email -> hỏi mật khẩu mới
+useEffect(()=>{const {data:{subscription}}=supabase.auth.onAuthStateChange(async ev=>{
+  if(ev==='SIGNED_IN')setShowLogin(false)
+  if(ev!=='PASSWORD_RECOVERY')return
+  const p=prompt('Nhập mật khẩu mới (ít nhất 6 ký tự):')
+  if(!p)return
+  const {error}=await supabase.auth.updateUser({password:p})
+  alert(error?'Không đổi được mật khẩu: '+error.message:'Đã đổi mật khẩu thành công!')})
+return()=>subscription.unsubscribe()},[])
 return(<header className="glass-dark text-white sticky top-0 z-40">
 <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
 <button onClick={goShop}><Logo s={settings}/></button>
@@ -37,6 +50,8 @@ return(<header className="glass-dark text-white sticky top-0 z-40">
       Đăng nhập Google
     </button>
   )}
+  {!user && <button onClick={()=>setShowLogin(true)} className="px-3 py-1.5 rounded-md text-xs font-semibold border border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-slate-950 transition">Email / GitHub</button>}
+  {showLogin && <LoginModal supabase={supabase} onClose={()=>setShowLogin(false)} onGoogleLogin={onGoogleLogin}/>}
 </div>
 
 {role==='Customer'&&<button onClick={goCart} className="relative p-2"><ShoppingCart/>{cartCount>0&&<span className="absolute -top-1 -right-1 bg-lime-400 text-slate-950 text-xs rounded-full h-5 w-5 grid place-items-center">{cartCount}</span>}</button>}
